@@ -1,0 +1,18 @@
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+
+android {
+    namespace 'com.openbrain.wakeword'
+    compileSdk 33
+
+    defaultConfig {
+        minSdk 26
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+}
+
+dependencies {
+    implementation 'androidx.core:core-ktx:1.10.1'
+    // Using a modern PocketSphinx wrapper for Android
+    implementation 'com.github.alphacep:pocketsphinx-android:5.2.1'
+}

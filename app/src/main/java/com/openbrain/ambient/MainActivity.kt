@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
 import android.provider.Settings
@@ -13,8 +12,10 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.lifecycleScope
 import com.openbrain.ambient.databinding.ActivityMainBinding
+import com.openbrain.ui.AdminActivity
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
@@ -24,6 +25,8 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        AmbientState.init(this)
 
         checkPermissions()
         requestBatteryOptimisationExemption()
@@ -64,10 +67,20 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupUI() {
         binding.toggleBtn.setOnClickListener {
-            AmbientState.toggleActive()
+            lifecycleScope.launch {
+                val newState = !AmbientState.isActive.value
+                AmbientState.setActive(this@MainActivity, newState)
+            }
         }
         binding.openAdminBtn.setOnClickListener {
-            val intent = Intent(this, com.openbrain.ui.AdminActivity::class.java)
+            val intent = Intent(this, AdminActivity::class.java)
+
+            // Pass sync log data to AdminActivity
+            val syncLog = AmbientState.syncLog.value
+            intent.putExtra("sync_timestamps", syncLog.map { it.timestamp }.toLongArray())
+            intent.putExtra("sync_statuses", syncLog.map { it.status }.toTypedArray())
+            intent.putExtra("sync_messages", syncLog.map { it.message }.toTypedArray())
+
             startActivity(intent)
         }
         binding.clearTranscriptBtn.setOnClickListener {

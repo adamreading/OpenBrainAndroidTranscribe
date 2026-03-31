@@ -1,87 +1,252 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp">
+    android:orientation="vertical">
 
-    <LinearLayout
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:padding="16dp">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="OpenBrain Settings"
-            android:textSize="24sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="24dp" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Supabase URL" />
-        <EditText
-            android:id="@+id/supabaseUrlEt"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="https://your-project.supabase.co" />
+            android:orientation="vertical">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Supabase API Key"
-            android:layout_marginTop="8dp" />
-        <EditText
-            android:id="@+id/supabaseKeyEt"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="anon-key"
-            android:inputType="textPassword" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="OpenBrain Settings"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="24dp" />
 
-        <Button
-            android:id="@+id/testConnectionBtn"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Test Connection"
-            android:layout_marginTop="8dp" />
+            <!-- OpenBrain Connection -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="OpenBrain Connection"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="8dp" />
 
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="#CCCCCC"
-            android:layout_marginVertical="16dp" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Supabase URL" />
+            <EditText
+                android:id="@+id/supabaseUrlEt"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="https://your-project.supabase.co"
+                android:inputType="textUri" />
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Wake Word Settings"
-            android:textStyle="bold" />
-        <EditText
-            android:id="@+id/wakeWordEt"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Hey Adam" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Supabase API Key"
+                android:layout_marginTop="8dp" />
+            <EditText
+                android:id="@+id/supabaseKeyEt"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="anon-key"
+                android:inputType="textPassword" />
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Whisper Model"
-            android:layout_marginTop="8dp" />
-        <Spinner
-            android:id="@+id/whisperModelSpinner"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            <Button
+                android:id="@+id/testConnectionBtn"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Test Connection"
+                android:layout_marginTop="8dp" />
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="LLM Model"
-            android:layout_marginTop="8dp" />
-        <Spinner
-            android:id="@+id/llmModelSpinner"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            <TextView
+                android:id="@+id/connectionStatusTv"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:textSize="14sp" />
 
-    </LinearLayout>
-</ScrollView>
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#CCCCCC"
+                android:layout_marginVertical="16dp" />
+
+            <!-- Whisper Settings -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Whisper Settings"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Whisper Model" />
+            <Spinner
+                android:id="@+id/whisperModelSpinner"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Whisper Threads"
+                android:layout_marginTop="8dp" />
+            <SeekBar
+                android:id="@+id/whisperThreadsSeekBar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:max="8"
+                android:progress="4" />
+            <TextView
+                android:id="@+id/whisperThreadsLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="4 threads" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#CCCCCC"
+                android:layout_marginVertical="16dp" />
+
+            <!-- LLM Settings -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="LLM Settings"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="LLM Model Filename" />
+            <EditText
+                android:id="@+id/llmModelEt"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="phi-3-mini-4k-instruct-q4.gguf" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="LLM Threads"
+                android:layout_marginTop="8dp" />
+            <SeekBar
+                android:id="@+id/llmThreadsSeekBar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:max="8"
+                android:progress="6" />
+            <TextView
+                android:id="@+id/llmThreadsLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="6 threads" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#CCCCCC"
+                android:layout_marginVertical="16dp" />
+
+            <!-- Wake Word Settings -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Wake Word Settings"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Wake Word" />
+            <EditText
+                android:id="@+id/wakeWordEt"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="hey adam" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Sleep Word"
+                android:layout_marginTop="8dp" />
+            <EditText
+                android:id="@+id/sleepWordEt"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="go to sleep" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#CCCCCC"
+                android:layout_marginVertical="16dp" />
+
+            <!-- Battery -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Battery"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="8dp" />
+
+            <Button
+                android:id="@+id/batteryOptBtn"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Request Battery Optimisation Exemption" />
+
+            <TextView
+                android:id="@+id/batteryStatusTv"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:textSize="14sp" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#CCCCCC"
+                android:layout_marginVertical="16dp" />
+
+            <!-- Save Button -->
+            <Button
+                android:id="@+id/saveBtn"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Save Settings"
+                android:layout_marginBottom="16dp" />
+
+            <!-- Sync Log -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Sync Log"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="8dp" />
+
+        </LinearLayout>
+    </ScrollView>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/syncLogRv"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:padding="8dp"
+        android:background="#F5F5F5" />
+
+</LinearLayout>

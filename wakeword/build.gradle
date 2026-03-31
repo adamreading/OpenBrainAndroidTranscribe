@@ -3,7 +3,7 @@ apply plugin: 'kotlin-android'
 
 android {
     namespace 'com.openbrain.wakeword'
-    compileSdk 33
+    compileSdk 35
 
     defaultConfig {
         minSdk 26
@@ -13,6 +13,5 @@ android {
 
 dependencies {
     implementation 'androidx.core:core-ktx:1.10.1'
-    // Using a modern PocketSphinx wrapper for Android
-    implementation 'com.github.alphacep:pocketsphinx-android:5.2.1'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
 }

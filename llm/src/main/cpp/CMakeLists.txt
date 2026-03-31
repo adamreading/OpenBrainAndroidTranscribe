@@ -22,6 +22,10 @@ target_include_directories(ggml_llama PUBLIC
     ${LLAMA_DIR}/ggml/src
 )
 target_compile_options(ggml_llama PRIVATE -O3)
+target_compile_definitions(ggml_llama PRIVATE
+    GGML_VERSION="0.0.0"
+    GGML_COMMIT="unknown"
+)
 
 # llama core sources (in src/)
 add_library(llama STATIC

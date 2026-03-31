@@ -27,6 +27,6 @@ obj/
 *.jks
 # Misc
 *.orig
-# Gradle Wrapper
-gradle/wrapper/gradle-wrapper.properties
+# Gradle Wrapper — do NOT ignore these, they are required for builds
+# gradle/wrapper/gradle-wrapper.properties  <- intentionally not ignored
 # End of .gitignore

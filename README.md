@@ -1,68 +1,151 @@
 # OpenBrain Ambient Android
 
-Ambient listening and memory extraction for Android. Runs entirely on-device using whisper.cpp for speech-to-text and llama.cpp for LLM-based memory extraction, with optional sync to a Supabase backend.
+Ambient listening and memory extraction for Android. Runs entirely on-device using whisper.cpp for speech-to-text and llama.cpp for LLM-based memory extraction, with automatic sync to your personal [OpenBrain](https://github.com/NateBJones-Projects/OB1) Supabase memory backend.
+
+**No cloud STT. No cloud LLM. Your voice stays on your device.**
+
+---
+
+## What it does
+
+1. Runs silently in the background as a persistent foreground service
+2. Listens for **"Hey Adam"** — activates full listening mode
+3. Captures and transcribes everything via on-device Whisper STT
+4. Every 60 seconds, sends the transcript to an on-device LLM (Phi-3-mini / Gemma)
+5. The LLM extracts only the important stuff: decisions, tasks, facts, reminders
+6. Sends those extracted memories to your OpenBrain Supabase instance over HTTPS
+7. **"Go to sleep"** — returns to low-power wake-word-only mode
+
+---
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────┐
+│                  AmbientService                  │
+│                                                  │
+│  AudioPipeline (single AudioRecord, 16kHz)       │
+│     │                                            │
+│     ├──► WakeWordEngine                          │
+│     │    (Android SpeechRecognizer, offline)     │
+│     │    "Hey Adam" → active=true                │
+│     │    "Go to sleep" → active=false            │
+│     │                                            │
+│     └──► AudioCaptureManager                     │
+│          (rolling 60s float buffer)              │
+│               │                                  │
+│               ▼ every 5s (when active)           │
+│          WhisperLib (whisper.cpp JNI)            │
+│               │ transcript text                  │
+│               ▼                                  │
+│          AmbientState                            │
+│          (DataStore-backed persistence)          │
+│               │                                  │
+│               ▼ every 60s (when active)          │
+│          MemoryExtractor                         │
+│          (LlamaLib + extraction prompt)          │
+│               │ List<MemoryItem> JSON            │
+│               ▼                                  │
+│          MemorySyncWorker (WorkManager)          │
+│               │ POST /rest/v1/memories           │
+│               ▼                                  │
+│          OpenBrainClient (Retrofit)              │
+│          → Supabase REST API                     │
+│          → 3x exponential backoff retry          │
+└─────────────────────────────────────────────────┘
+```
+
+### Modules
+
+| Module | Purpose |
+|--------|---------|
+| `app` | Main service, audio pipeline, state management |
+| `asr` | Whisper STT via whisper.cpp JNI |
+| `llm` | LLM inference via llama.cpp JNI |
+| `openbrain-client` | Supabase REST client + WorkManager sync queue |
+| `ui` | Admin / settings screen |
+| `wakeword` | Wake word detection engine |
+
+---
 
 ## Stages
 
-### Stage 1 — Wake Word Detection
-- Wake-word detection using Android SpeechRecognizer in offline mode
-- Background Foreground Service for persistent listening
-- Central `AmbientState` with DataStore-backed persistence
-- Simple toggle UI in MainActivity
+### Stage 1 — Wake Word Detection ✅
+- Always-on background foreground service
+- SpeechRecognizer offline fallback (ONNX-ready interface for future custom model)
+- "Hey Adam" / "Go to sleep" phrase detection
+- DataStore-backed `isActive` state that survives process death
+- Manual toggle in MainActivity
 
-### Stage 2 — Speech-To-Text
-- [whisper.cpp](https://github.com/ggerganov/whisper.cpp) integration via JNI for offline transcription
-- Real-time audio capture and 5-second transcription chunks
-- Live transcript display in MainActivity
+### Stage 2 — Local Speech-To-Text ✅
+- whisper.cpp integration via JNI (CMake / NDK)
+- Unified AudioPipeline — single AudioRecord feeds all consumers
+- 5-second chunked transcription loop
+- Live transcript in MainActivity
 
-### Stage 3 — Memory Extraction & Sync
-- Unified AudioPipeline (single AudioRecord, multiple listeners)
-- [llama.cpp](https://github.com/ggerganov/llama.cpp) integration via JNI for on-device LLM inference
-- MemoryExtractor: extracts decisions, tasks, facts, reminders from transcripts
-- OpenBrain client with Retrofit + WorkManager for reliable Supabase sync
-- Full AdminActivity settings UI (connection, models, wake words, sync log)
-- Samsung Galaxy S26 Ultra optimisations (battery, permissions, service types)
+### Stage 3 — Memory Extraction & Cloud Sync ✅
+- llama.cpp integration via JNI (CMake / NDK)
+- MemoryExtractor: structured JSON extraction prompt (decisions, tasks, facts, reminders)
+- Supabase REST client with 3x exponential backoff retry
+- WorkManager queue — syncs survive app kill and network outages
+- Full AdminActivity: connection config, model settings, wake words, battery, sync log
+- Samsung Galaxy S26 Ultra specific optimisations
+
+### Stage 4 — Planned (see TODO.md)
+- Custom ONNX wake word model for "Hey Adam"
+- Voice Activity Detection (skip silence)
+- Streaming Whisper output
+- Bidirectional Supabase sync
+
+---
 
 ## Device Support
 
 **Primary target**: Samsung Galaxy S26 Ultra (Android 15 / One UI 7)
 
-Samsung-specific handling:
+Samsung-specific handling built in:
 - Battery optimisation exemption request on first launch
-- `FOREGROUND_SERVICE_MICROPHONE` permission for Android 14+
+- `FOREGROUND_SERVICE_MICROPHONE` permission (Android 14+ requirement)
 - `foregroundServiceType="microphone|dataSync"` for background operation
-- `MediaRecorder.AudioSource.MIC` (not VOICE_COMMUNICATION) for Samsung compatibility
-- All file writes inside app-private directories (Knox safe)
+- `MediaRecorder.AudioSource.MIC` (Samsung Knox compatible)
+- Auto Blocker must be disabled once to enable USB debugging during development
 
-**Secondary**: Any Android 14+ device
+**Minimum**: Android 8.0 (API 26)
 
-## Model Files
+---
 
-Model files are NOT included in the repository. Download and push them to your device:
+## Model Files Required
 
-### Whisper STT Model
-```bash
-# Download from https://huggingface.co/ggerganov/whisper.cpp/tree/main
-# Options: ggml-tiny.en.bin (75MB), ggml-base.en.bin (142MB), ggml-small.en.bin (466MB)
-adb push ggml-tiny.en.bin /sdcard/Android/data/com.openbrain.ambient/files/whisper/
-```
+Model files are NOT in the repo — download and push to device separately.
 
-### LLM Model (for memory extraction)
-```bash
-# Download a GGUF model — recommended: Phi-3-mini or Gemma-2B quantized
-# From https://huggingface.co/models?search=gguf
-adb push phi-3-mini-4k-instruct-q4.gguf /sdcard/Android/data/com.openbrain.ambient/files/llm/
-```
+| Model | File | Size | Purpose |
+|-------|------|------|---------|
+| Whisper tiny | `ggml-tiny.en.bin` | 75 MB | Speech-to-text (fast, lower accuracy) |
+| Whisper base | `ggml-base.en.bin` | 142 MB | Speech-to-text (balanced) |
+| Phi-3-mini Q4 | `phi-3-mini-4k-instruct-q4.gguf` | ~2 GB | Memory extraction LLM (recommended) |
+| Gemma 2B Q4 | `gemma-2b-it-q4_k_m.gguf` | ~1.5 GB | Memory extraction LLM (lighter) |
+
+See [BUILDING.md](BUILDING.md) for download links and push instructions.
+
+---
 
 ## Quick Start
 
-1. See [BUILDING.md](BUILDING.md) for full build instructions
-2. Push model files to device (see above)
-3. Install APK and grant RECORD_AUDIO permission
-4. App requests battery optimisation exemption on first launch
-5. Say "Hey Adam" to activate, "Go to sleep" to deactivate
-6. Open Settings to configure Supabase connection for cloud sync
+See **[BUILDING.md](BUILDING.md)** for the full step-by-step guide including:
+- Android Studio setup
+- NDK / CMake installation
+- Cloning native dependencies (whisper.cpp, llama.cpp)
+- Samsung S26 USB debugging setup (Auto Blocker, Developer Mode)
+- Pushing model files to device
+- Configuring Supabase connection
 
-## Architecture
+---
 
-See [STAGE3.md](STAGE3.md) for detailed Stage 3 architecture.
+## OpenBrain Backend
+
+This app is designed to work with [Nate B. Jones's OpenBrain](https://promptkit.natebjones.com) architecture:
+- Supabase Postgres with pgvector
+- Deno Edge Function MCP server (`open-brain-mcp`)
+- The app POSTs to `/rest/v1/memories` with your project URL and service role key
+
+The extracted memories become searchable from any MCP-connected AI (Claude, ChatGPT, Cursor, etc.) via the `search_thoughts` tool.

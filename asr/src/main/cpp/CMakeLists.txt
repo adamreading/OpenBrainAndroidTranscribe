@@ -22,6 +22,10 @@ target_include_directories(ggml PUBLIC
     ${WHISPER_DIR}/ggml/src
 )
 target_compile_options(ggml PRIVATE -O3)
+target_compile_definitions(ggml PRIVATE
+    GGML_VERSION="0.0.0"
+    GGML_COMMIT="unknown"
+)
 
 # whisper core (in src/)
 add_library(whisper STATIC

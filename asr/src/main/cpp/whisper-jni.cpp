@@ -2,7 +2,7 @@
 #include <string>
 #include <vector>
 #include <android/log.h>
-#include "whisper.cpp/whisper.h"
+#include "whisper.h"
 
 #define TAG "WhisperJNI"
 #define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, TAG, __VA_ARGS__)

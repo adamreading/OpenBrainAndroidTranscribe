@@ -3,28 +3,43 @@ project("whisper-jni")
 
 set(WHISPER_DIR ${CMAKE_CURRENT_SOURCE_DIR}/whisper.cpp)
 
-# whisper.cpp source files — use file(GLOB) to handle both old and new ggml structures.
-# Developer must clone whisper.cpp into asr/src/main/cpp/whisper.cpp/ before building.
-# See BUILDING.md for instructions.
-file(GLOB GGML_SOURCES
-    "${WHISPER_DIR}/ggml*.c"
-    "${WHISPER_DIR}/ggml*.cpp"
-    "${WHISPER_DIR}/ggml/src/*.c"
-    "${WHISPER_DIR}/ggml/src/*.cpp"
+# ggml core sources (in ggml/src/)
+add_library(ggml STATIC
+    ${WHISPER_DIR}/ggml/src/ggml.c
+    ${WHISPER_DIR}/ggml/src/ggml-alloc.c
+    ${WHISPER_DIR}/ggml/src/ggml-backend.cpp
+    ${WHISPER_DIR}/ggml/src/ggml-backend-reg.cpp
+    ${WHISPER_DIR}/ggml/src/ggml-backend-dl.cpp
+    ${WHISPER_DIR}/ggml/src/ggml-quants.c
+    ${WHISPER_DIR}/ggml/src/ggml-threading.cpp
+    ${WHISPER_DIR}/ggml/src/ggml-opt.cpp
+    ${WHISPER_DIR}/ggml/src/gguf.cpp
+    ${WHISPER_DIR}/ggml/src/ggml.cpp
 )
 
+target_include_directories(ggml PUBLIC
+    ${WHISPER_DIR}/ggml/include
+    ${WHISPER_DIR}/ggml/src
+)
+target_compile_options(ggml PRIVATE -O3)
+
+# whisper core (in src/)
 add_library(whisper STATIC
-    ${WHISPER_DIR}/whisper.cpp
-    ${GGML_SOURCES}
+    ${WHISPER_DIR}/src/whisper.cpp
 )
 
-# Include both old-style (flat) and new-style (ggml/include) header locations
 target_include_directories(whisper PUBLIC
-    ${WHISPER_DIR}
+    ${WHISPER_DIR}/include
+    ${WHISPER_DIR}/src
     ${WHISPER_DIR}/ggml/include
 )
 target_compile_options(whisper PRIVATE -O3)
-set_target_properties(whisper PROPERTIES LINKER_LANGUAGE CXX)
+target_link_libraries(whisper ggml)
 
+# JNI bridge
 add_library(whisper-jni SHARED whisper-jni.cpp)
-target_link_libraries(whisper-jni whisper log android)
+target_include_directories(whisper-jni PRIVATE
+    ${WHISPER_DIR}/include
+    ${WHISPER_DIR}/ggml/include
+)
+target_link_libraries(whisper-jni whisper ggml log android)

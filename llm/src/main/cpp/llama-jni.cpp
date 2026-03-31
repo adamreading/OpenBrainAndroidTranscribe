@@ -2,7 +2,7 @@
 #include <string>
 #include <vector>
 #include <android/log.h>
-#include "llama.cpp/llama.h"
+#include "llama.h"
 
 #define TAG "LlamaJNI"
 #define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, TAG, __VA_ARGS__)

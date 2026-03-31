@@ -8,6 +8,18 @@
 #define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, TAG, __VA_ARGS__)
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, TAG, __VA_ARGS__)
 
+// Helper to add a token to a batch (replaces removed llama_batch_add)
+static void batch_add(llama_batch & batch, llama_token id, llama_pos pos, const std::vector<llama_seq_id> & seq_ids, bool logits) {
+    batch.token[batch.n_tokens]    = id;
+    batch.pos[batch.n_tokens]      = pos;
+    batch.n_seq_id[batch.n_tokens] = (int32_t) seq_ids.size();
+    for (size_t i = 0; i < seq_ids.size(); i++) {
+        batch.seq_id[batch.n_tokens][i] = seq_ids[i];
+    }
+    batch.logits[batch.n_tokens]   = logits;
+    batch.n_tokens++;
+}
+
 struct LlamaContext {
     llama_model * model;
     llama_context * ctx;
@@ -22,7 +34,7 @@ Java_com_openbrain_llm_LlamaLib_initLlama(JNIEnv *env, jobject thiz, jstring mod
     llama_backend_init();
 
     auto model_params = llama_model_default_params();
-    llama_model * model = llama_load_model_from_file(path, model_params);
+    llama_model * model = llama_model_load_from_file(path, model_params);
 
     env->ReleaseStringUTFChars(model_path, path);
 
@@ -36,10 +48,10 @@ Java_com_openbrain_llm_LlamaLib_initLlama(JNIEnv *env, jobject thiz, jstring mod
     // Samsung S26 Ultra has high core count — use 6 threads
     ctx_params.n_threads = 6;
 
-    llama_context * ctx = llama_new_context_with_model(model, ctx_params);
+    llama_context * ctx = llama_init_from_model(model, ctx_params);
     if (ctx == nullptr) {
         LOGE("Failed to create llama context");
-        llama_free_model(model);
+        llama_model_free(model);
         return 0;
     }
 
@@ -57,11 +69,12 @@ Java_com_openbrain_llm_LlamaLib_runInference(JNIEnv *env, jobject thiz, jlong co
     }
 
     const char *prompt = env->GetStringUTFChars(prompt_str, nullptr);
+    const llama_vocab * vocab = llama_model_get_vocab(wrapper->model);
 
     // Tokenize the prompt
     const int n_prompt_max = 2048;
     std::vector<llama_token> tokens(n_prompt_max);
-    int n_tokens = llama_tokenize(wrapper->model, prompt, strlen(prompt), tokens.data(), n_prompt_max, true, false);
+    int n_tokens = llama_tokenize(vocab, prompt, (int32_t) strlen(prompt), tokens.data(), n_prompt_max, true, false);
 
     env->ReleaseStringUTFChars(prompt_str, prompt);
 
@@ -72,12 +85,12 @@ Java_com_openbrain_llm_LlamaLib_runInference(JNIEnv *env, jobject thiz, jlong co
     tokens.resize(n_tokens);
 
     // Clear KV cache
-    llama_kv_cache_clear(wrapper->ctx);
+    llama_kv_self_clear(wrapper->ctx);
 
     // Evaluate prompt tokens in a single batch
     llama_batch batch = llama_batch_init(n_tokens, 0, 1);
     for (int i = 0; i < n_tokens; i++) {
-        llama_batch_add(batch, tokens[i], i, {0}, false);
+        batch_add(batch, tokens[i], i, {0}, false);
     }
     batch.logits[batch.n_tokens - 1] = true;
 
@@ -94,7 +107,7 @@ Java_com_openbrain_llm_LlamaLib_runInference(JNIEnv *env, jobject thiz, jlong co
 
     for (int i = 0; i < n_gen; i++) {
         auto * logits = llama_get_logits_ith(wrapper->ctx, batch.n_tokens - 1);
-        const int n_vocab = llama_n_vocab(wrapper->model);
+        const int n_vocab = llama_vocab_n_tokens(vocab);
 
         // Greedy sampling
         llama_token best_token = 0;
@@ -107,20 +120,20 @@ Java_com_openbrain_llm_LlamaLib_runInference(JNIEnv *env, jobject thiz, jlong co
         }
 
         // Check for EOS
-        if (llama_token_is_eog(wrapper->model, best_token)) {
+        if (llama_vocab_is_eog(vocab, best_token)) {
             break;
         }
 
         // Convert token to text
         char buf[256];
-        int n = llama_token_to_piece(wrapper->model, best_token, buf, sizeof(buf), 0, false);
+        int n = llama_vocab_token_to_piece(vocab, best_token, buf, sizeof(buf), 0, false);
         if (n > 0) {
             result.append(buf, n);
         }
 
         // Prepare next batch
-        llama_batch_clear(batch);
-        llama_batch_add(batch, best_token, n_cur, {0}, true);
+        batch.n_tokens = 0;
+        batch_add(batch, best_token, n_cur, {0}, true);
         n_cur++;
 
         if (llama_decode(wrapper->ctx, batch) != 0) {
@@ -144,7 +157,7 @@ Java_com_openbrain_llm_LlamaLib_freeLlama(JNIEnv *env, jobject thiz, jlong conte
             llama_free(wrapper->ctx);
         }
         if (wrapper->model != nullptr) {
-            llama_free_model(wrapper->model);
+            llama_model_free(wrapper->model);
         }
         delete wrapper;
         LOGD("Llama context freed");

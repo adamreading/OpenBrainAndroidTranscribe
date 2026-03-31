@@ -25,6 +25,7 @@ target_compile_options(ggml PRIVATE -O3)
 target_compile_definitions(ggml PRIVATE
     GGML_VERSION="0.0.0"
     GGML_COMMIT="unknown"
+    GGML_BUILD_NUMBER=0
 )
 
 # whisper core (in src/)
@@ -38,6 +39,10 @@ target_include_directories(whisper PUBLIC
     ${WHISPER_DIR}/ggml/include
 )
 target_compile_options(whisper PRIVATE -O3)
+target_compile_definitions(whisper PRIVATE
+    WHISPER_VERSION="0.0.0"
+    WHISPER_COMMIT="unknown"
+)
 target_link_libraries(whisper ggml)
 
 # JNI bridge

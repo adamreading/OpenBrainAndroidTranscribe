@@ -25,6 +25,7 @@ target_compile_options(ggml_llama PRIVATE -O3)
 target_compile_definitions(ggml_llama PRIVATE
     GGML_VERSION="0.0.0"
     GGML_COMMIT="unknown"
+    GGML_BUILD_NUMBER=0
 )
 
 # llama core sources (in src/)

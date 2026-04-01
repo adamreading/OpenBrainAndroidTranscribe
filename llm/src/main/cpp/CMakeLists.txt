@@ -5,10 +5,13 @@ set(LLAMA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/llama.cpp)
 
 # ggml core sources — GLOB to automatically pick up all source files.
 # When updating llama.cpp, new ggml source files are included automatically.
-file(GLOB GGML_SOURCES
+file(GLOB GGML_SOURCES CONFIGURE_DEPENDS
     "${LLAMA_DIR}/ggml/src/*.c"
     "${LLAMA_DIR}/ggml/src/*.cpp"
 )
+if(NOT GGML_SOURCES)
+    message(FATAL_ERROR "No ggml sources found in ${LLAMA_DIR}/ggml/src/ — did you clone llama.cpp?")
+endif()
 
 add_library(ggml_llama STATIC ${GGML_SOURCES})
 
@@ -26,10 +29,13 @@ target_compile_definitions(ggml_llama PRIVATE
 # llama core sources — GLOB to automatically pick up all source files.
 # This includes per-architecture model builders (llm_build_bert, llm_build_llama, etc.)
 # that previously caused linker errors when listed individually.
-file(GLOB LLAMA_SOURCES
+file(GLOB LLAMA_SOURCES CONFIGURE_DEPENDS
     "${LLAMA_DIR}/src/*.c"
     "${LLAMA_DIR}/src/*.cpp"
 )
+if(NOT LLAMA_SOURCES)
+    message(FATAL_ERROR "No llama sources found in ${LLAMA_DIR}/src/ — did you clone llama.cpp?")
+endif()
 
 add_library(llama STATIC ${LLAMA_SOURCES})
 

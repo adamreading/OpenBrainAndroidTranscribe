@@ -74,8 +74,8 @@
 - `WakeWordEngine.kt` — Replaced PocketSphinx with SpeechRecognizer offline fallback
 
 ### llm module (all new)
-- `cpp/CMakeLists.txt` — CMake for llama.cpp native build
-- `cpp/llama-jni.cpp` — JNI bridge: init, inference (greedy sampling), free
+- `cpp/CMakeLists.txt` — CMake for llama.cpp native build (includes GGML_VERSION/GGML_COMMIT compile definitions)
+- `cpp/llama-jni.cpp` — JNI bridge: init, inference (greedy sampling), free. Updated to current llama.cpp API (April 2026): uses `llama_model_load_from_file`, `llama_init_from_model`, `llama_model_free`, vocab-based tokenization via `llama_model_get_vocab()`, and `llama_memory_clear` for KV cache management
 - `LlamaLib.kt` — Kotlin native method wrapper
 - `MemoryItem.kt` — Data class for extracted memories
 - `MemoryExtractor.kt` — Extraction prompt + JSON parsing

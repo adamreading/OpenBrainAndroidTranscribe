@@ -91,6 +91,12 @@ Ambient listening and memory extraction for Android. Runs entirely on-device usi
 - Full AdminActivity: connection config, model settings, wake words, battery, sync log
 - Samsung Galaxy S26 Ultra specific optimisations
 
+### Build Status
+- Project builds cleanly against current whisper.cpp and llama.cpp APIs (as of April 2026)
+- JNI bridges (`whisper-jni.cpp`, `llama-jni.cpp`) are up to date with upstream API changes
+- All modules target JVM 17
+- Launcher icons are placeholder PNGs — replace with real app branding when ready
+
 ### Stage 4 — Planned (see TODO.md)
 - Custom ONNX wake word model for "Hey Adam"
 - Voice Activity Detection (skip silence)

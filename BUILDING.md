@@ -90,10 +90,9 @@ llm/src/main/cpp/
 
 | Error | Cause | Fix |
 |-------|-------|-----|
-| `Unable to find method org.gradle.api.artifacts.Dependency` | Missing Gradle wrapper | Was fixed — pull latest main |
-| `Unknown Kotlin JVM target: 21` | Old JVM target setting | Was fixed — pull latest main |
 | `CMake Error: Cannot find source file` | whisper.cpp or llama.cpp not cloned | Run Step 3 above |
-| `AndroidX property not enabled` | Missing gradle.properties | Was fixed — pull latest main |
+
+> **Note on llama.cpp API compatibility**: The JNI bridge (`llama-jni.cpp`) targets the current llama.cpp API as of April 2026. If you update your llama.cpp clone to a newer version, the API may have changed — check for renamed functions (e.g. model init, vocab access, KV cache / memory management) and update the JNI bridge accordingly.
 
 ---
 

@@ -4,6 +4,10 @@
 - ✅ Stage 1: Wake word detection (SpeechRecognizer offline fallback)
 - ✅ Stage 2: Whisper STT via whisper.cpp JNI
 - ✅ Stage 3: LLM extraction + Supabase sync
+- ✅ JVM target set to 17 across all modules
+- ✅ GGML_VERSION/GGML_COMMIT/GGML_BUILD_NUMBER compile definitions added to CMake
+- ✅ llama-jni.cpp updated to current llama.cpp API (model/vocab/memory functions)
+- ✅ App manifest theme and launcher icons in place
 - 🔲 Stage 4: items below
 
 ---
@@ -103,6 +107,7 @@
 
 ## Technical Debt
 
+- [ ] Replace placeholder launcher icons with real app branding (all density buckets mdpi–xxxhdpi)
 - [ ] Add unit tests for MemoryExtractor JSON parsing
 - [ ] Add unit tests for OpenBrainClient retry logic
 - [ ] Add integration test for AudioPipeline listener dispatch

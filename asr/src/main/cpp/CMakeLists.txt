@@ -5,10 +5,13 @@ set(WHISPER_DIR ${CMAKE_CURRENT_SOURCE_DIR}/whisper.cpp)
 
 # ggml core sources — GLOB to automatically pick up all source files.
 # When updating whisper.cpp, new ggml source files are included automatically.
-file(GLOB GGML_SOURCES
+file(GLOB GGML_SOURCES CONFIGURE_DEPENDS
     "${WHISPER_DIR}/ggml/src/*.c"
     "${WHISPER_DIR}/ggml/src/*.cpp"
 )
+if(NOT GGML_SOURCES)
+    message(FATAL_ERROR "No ggml sources found in ${WHISPER_DIR}/ggml/src/ — did you clone whisper.cpp?")
+endif()
 
 add_library(ggml STATIC ${GGML_SOURCES})
 
@@ -25,10 +28,13 @@ target_compile_definitions(ggml PRIVATE
 
 # whisper core sources — GLOB to automatically pick up all source files.
 # When updating whisper.cpp, new source files are included automatically.
-file(GLOB WHISPER_SOURCES
+file(GLOB WHISPER_SOURCES CONFIGURE_DEPENDS
     "${WHISPER_DIR}/src/*.c"
     "${WHISPER_DIR}/src/*.cpp"
 )
+if(NOT WHISPER_SOURCES)
+    message(FATAL_ERROR "No whisper sources found in ${WHISPER_DIR}/src/ — did you clone whisper.cpp?")
+endif()
 
 add_library(whisper STATIC ${WHISPER_SOURCES})
 

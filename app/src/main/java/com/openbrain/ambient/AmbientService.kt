@@ -3,7 +3,6 @@ package com.openbrain.ambient
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
-import android.content.Context
 import android.content.Intent
 import android.os.IBinder
 import android.util.Log
@@ -15,7 +14,6 @@ import com.openbrain.llm.LlamaLib
 import com.openbrain.llm.MemoryExtractor
 import com.openbrain.wakeword.WakeWordEngine
 import com.openbrain.ambient.AppSettings.settingsDataStore
-import com.openbrain.ui.AdminActivity
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn

@@ -8,6 +8,8 @@
 - ✅ GGML_VERSION/GGML_COMMIT/GGML_BUILD_NUMBER compile definitions added to CMake
 - ✅ llama-jni.cpp updated to current llama.cpp API (model/vocab/memory functions)
 - ✅ App manifest theme and launcher icons in place
+- ✅ CMakeLists.txt uses file(GLOB) for llama.cpp/whisper.cpp sources — fixes all linker errors from missing per-architecture model builders (llm_build_bert, llm_build_llama, etc.)
+- ✅ Unused Kotlin imports cleaned up (AmbientService.kt, AmbientState.kt)
 - 🔲 Stage 4: items below
 
 ---

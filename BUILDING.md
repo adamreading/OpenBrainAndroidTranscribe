@@ -91,6 +91,9 @@ llm/src/main/cpp/
 | Error | Cause | Fix |
 |-------|-------|-----|
 | `CMake Error: Cannot find source file` | whisper.cpp or llama.cpp not cloned | Run Step 3 above |
+| Linker errors (`undefined symbol: llm_build_*`) | Outdated explicit source list in CMake | Fixed — CMakeLists.txt now uses `file(GLOB)` to include all source files automatically |
+
+> **Note on source file inclusion**: The CMakeLists.txt files use `file(GLOB ...)` to include all `.c` and `.cpp` files from llama.cpp and whisper.cpp source directories. If you update your llama.cpp or whisper.cpp clone to a newer version, the GLOB approach will automatically pick up any new source files — no CMakeLists.txt changes needed. You only need to re-run CMake configure (Gradle does this on sync).
 
 > **Note on llama.cpp API compatibility**: The JNI bridge (`llama-jni.cpp`) targets the current llama.cpp API as of April 2026. If you update your llama.cpp clone to a newer version, the API may have changed — check for renamed functions (e.g. model init, vocab access, KV cache / memory management) and update the JNI bridge accordingly.
 

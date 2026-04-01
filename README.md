@@ -94,6 +94,7 @@ Ambient listening and memory extraction for Android. Runs entirely on-device usi
 ### Build Status
 - Project builds cleanly against current whisper.cpp and llama.cpp APIs (as of April 2026)
 - JNI bridges (`whisper-jni.cpp`, `llama-jni.cpp`) are up to date with upstream API changes
+- CMakeLists.txt uses `file(GLOB ...)` to include all native source files — updating llama.cpp or whisper.cpp to a newer version automatically picks up new/renamed source files without editing CMake
 - All modules target JVM 17
 - Launcher icons are placeholder PNGs — replace with real app branding when ready
 

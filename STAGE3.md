@@ -74,7 +74,7 @@
 - `WakeWordEngine.kt` — Replaced PocketSphinx with SpeechRecognizer offline fallback
 
 ### llm module (all new)
-- `cpp/CMakeLists.txt` — CMake for llama.cpp native build (includes GGML_VERSION/GGML_COMMIT compile definitions)
+- `cpp/CMakeLists.txt` — CMake for llama.cpp native build. Uses `file(GLOB)` to include all source files from `llama.cpp/src/` and `llama.cpp/ggml/src/` — this ensures per-architecture model builders (e.g. `llm_build_bert`, `llm_build_llama`) are linked correctly. Includes GGML_VERSION/GGML_COMMIT compile definitions.
 - `cpp/llama-jni.cpp` — JNI bridge: init, inference (greedy sampling), free. Updated to current llama.cpp API (April 2026): uses `llama_model_load_from_file`, `llama_init_from_model`, `llama_model_free`, vocab-based tokenization via `llama_model_get_vocab()`, and `llama_memory_clear` for KV cache management
 - `LlamaLib.kt` — Kotlin native method wrapper
 - `MemoryItem.kt` — Data class for extracted memories
@@ -119,4 +119,4 @@ adb push phi-3-mini-4k-instruct-q4.gguf /sdcard/Android/data/com.openbrain.ambie
 
 Requires NDK 25+ with C++17 support. See [BUILDING.md](BUILDING.md) for full instructions.
 
-Native libraries (whisper.cpp and llama.cpp) must be cloned into their respective module directories before building — they are not committed to the repo.
+Native libraries (whisper.cpp and llama.cpp) must be cloned into their respective module directories before building — they are not committed to the repo. CMakeLists.txt uses `file(GLOB)` to include all source files, so updating to a newer version of either library requires no CMake changes.

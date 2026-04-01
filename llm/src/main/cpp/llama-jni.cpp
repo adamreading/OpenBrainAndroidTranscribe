@@ -85,7 +85,7 @@ Java_com_openbrain_llm_LlamaLib_runInference(JNIEnv *env, jobject thiz, jlong co
     tokens.resize(n_tokens);
 
     // Clear KV cache
-    llama_kv_self_clear(wrapper->ctx);
+    llama_memory_clear(llama_get_memory(wrapper->ctx), true);
 
     // Evaluate prompt tokens in a single batch
     llama_batch batch = llama_batch_init(n_tokens, 0, 1);
@@ -126,7 +126,7 @@ Java_com_openbrain_llm_LlamaLib_runInference(JNIEnv *env, jobject thiz, jlong co
 
         // Convert token to text
         char buf[256];
-        int n = llama_vocab_token_to_piece(vocab, best_token, buf, sizeof(buf), 0, false);
+        int n = llama_token_to_piece(vocab, best_token, buf, sizeof(buf), 0, false);
         if (n > 0) {
             result.append(buf, n);
         }

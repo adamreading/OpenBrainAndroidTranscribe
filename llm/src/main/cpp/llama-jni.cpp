@@ -8,6 +8,12 @@
 #define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, TAG, __VA_ARGS__)
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, TAG, __VA_ARGS__)
 
+// Custom log callback to capture llama.cpp internal errors
+void llama_log_callback(ggml_log_level level, const char * text, void * user_data) {
+    if (level == GGML_LOG_LEVEL_ERROR) LOGE("llama.cpp: %s", text);
+    else LOGD("llama.cpp: %s", text);
+}
+
 // Helper to add a token to a batch (replaces removed llama_batch_add)
 static void batch_add(llama_batch & batch, llama_token id, llama_pos pos, const std::vector<llama_seq_id> & seq_ids, bool logits) {
     batch.token[batch.n_tokens]    = id;
@@ -27,19 +33,34 @@ struct LlamaContext {
 
 extern "C"
 JNIEXPORT jlong JNICALL
-Java_com_openbrain_llm_LlamaLib_initLlama(JNIEnv *env, jobject thiz, jstring model_path) {
+Java_com_openbrain_llm_LlamaLib_nativeInitLlama(JNIEnv *env, jobject thiz, jstring model_path) {
     const char *path = env->GetStringUTFChars(model_path, nullptr);
     LOGD("Initializing llama with model: %s", path);
+
+    llama_log_set(llama_log_callback, nullptr);
+
+    // Check if file exists and is readable
+    FILE *f = fopen(path, "rb");
+    if (f == nullptr) {
+        LOGE("Cannot open model file for reading: %s (errno: %d)", path, errno);
+    } else {
+        fclose(f);
+        LOGD("Model file is readable");
+    }
 
     llama_backend_init();
 
     auto model_params = llama_model_default_params();
+    model_params.n_gpu_layers = 0;
+    model_params.use_mmap = true; // For 2.4GB, mmap is actually better to avoid heap exhaustion
+
+    LOGD("Loading model from file...");
     llama_model * model = llama_model_load_from_file(path, model_params);
 
     env->ReleaseStringUTFChars(model_path, path);
 
     if (model == nullptr) {
-        LOGE("Failed to load llama model");
+        LOGE("Failed to load llama model (llama_model_load_from_file returned null)");
         return 0;
     }
 
@@ -62,7 +83,7 @@ Java_com_openbrain_llm_LlamaLib_initLlama(JNIEnv *env, jobject thiz, jstring mod
 
 extern "C"
 JNIEXPORT jstring JNICALL
-Java_com_openbrain_llm_LlamaLib_runInference(JNIEnv *env, jobject thiz, jlong context_ptr, jstring prompt_str, jint max_tokens) {
+Java_com_openbrain_llm_LlamaLib_nativeRunInference(JNIEnv *env, jobject thiz, jlong context_ptr, jstring prompt_str, jint max_tokens) {
     auto * wrapper = reinterpret_cast<LlamaContext *>(context_ptr);
     if (wrapper == nullptr || wrapper->ctx == nullptr) {
         return env->NewStringUTF("");
@@ -150,7 +171,7 @@ Java_com_openbrain_llm_LlamaLib_runInference(JNIEnv *env, jobject thiz, jlong co
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_openbrain_llm_LlamaLib_freeLlama(JNIEnv *env, jobject thiz, jlong context_ptr) {
+Java_com_openbrain_llm_LlamaLib_nativeFreeLlama(JNIEnv *env, jobject thiz, jlong context_ptr) {
     auto * wrapper = reinterpret_cast<LlamaContext *>(context_ptr);
     if (wrapper != nullptr) {
         if (wrapper->ctx != nullptr) {

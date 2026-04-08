@@ -21,7 +21,7 @@ class MemorySyncWorker(
         if (!queueFile.exists()) return Result.success()
 
         val baseUrl = inputData.getString("base_url") ?: return Result.failure()
-        val apiKey = inputData.getString("api_key") ?: return Result.failure()
+        val apiKey = inputData.getString("api_key") ?: ""
 
         val type = object : TypeToken<MutableList<MemoryRequest>>() {}.type
         val queue: MutableList<MemoryRequest> = try {

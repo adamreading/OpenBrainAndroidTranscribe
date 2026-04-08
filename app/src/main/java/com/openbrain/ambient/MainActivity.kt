@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
 import android.provider.Settings
@@ -12,7 +13,10 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.lifecycleScope
 import com.openbrain.ambient.databinding.ActivityMainBinding
+import androidx.activity.result.contract.ActivityResultContracts
+import com.openbrain.core.Logger
 import com.openbrain.ui.AdminActivity
+import com.openbrain.ui.SyncLogItem
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -21,8 +25,21 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
 
+    private val adminLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == RESULT_FIRST_USER) {
+            val action = result.data?.getStringExtra("action")
+            if (action == "test_connection") {
+                val url = result.data?.getStringExtra("supabase_url") ?: ""
+                val key = result.data?.getStringExtra("supabase_api_key") ?: ""
+                testConnection(url, key)
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Logger.init(applicationContext)
+        Logger.d("MainActivity onCreate")
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
@@ -36,8 +53,17 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun checkPermissions() {
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.RECORD_AUDIO), 100)
+        val permissions = mutableListOf(Manifest.permission.RECORD_AUDIO)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            permissions.add(Manifest.permission.POST_NOTIFICATIONS)
+        }
+        
+        val missingPermissions = permissions.filter {
+            ActivityCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
+        }
+
+        if (missingPermissions.isNotEmpty()) {
+            ActivityCompat.requestPermissions(this, missingPermissions.toTypedArray(), 100)
         } else {
             startAmbientService()
         }
@@ -81,7 +107,7 @@ class MainActivity : AppCompatActivity() {
             intent.putExtra("sync_statuses", syncLog.map { it.status }.toTypedArray())
             intent.putExtra("sync_messages", syncLog.map { it.message }.toTypedArray())
 
-            startActivity(intent)
+            adminLauncher.launch(intent)
         }
         binding.clearTranscriptBtn.setOnClickListener {
             AmbientState.clearTranscript()
@@ -89,17 +115,39 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun observeState() {
-        AmbientState.isActive
-            .onEach { isActive ->
-                binding.statusTv.text = if (isActive) "Listening" else "Sleeping"
-                binding.toggleBtn.text = if (isActive) "Go to sleep" else "Wake Up"
-            }
-            .launchIn(lifecycleScope)
+        AmbientState.isActive.onEach { isActive ->
+            binding.statusTv.text = if (isActive) "Listening" else "Sleeping"
+            binding.toggleBtn.text = if (isActive) "Stop" else "Start"
+        }.launchIn(lifecycleScope)
 
-        AmbientState.transcript
-            .onEach { text ->
-                binding.transcriptTv.text = text
+        AmbientState.transcript.onEach { text ->
+            binding.transcriptTv.text = text
+            // Auto scroll to bottom
+            binding.transcriptTv.post {
+                binding.transcriptTv.parent.let {
+                    if (it is android.widget.ScrollView) {
+                        it.fullScroll(android.view.View.FOCUS_DOWN)
+                    }
+                }
             }
-            .launchIn(lifecycleScope)
+        }.launchIn(lifecycleScope)
+    }
+
+    private fun testConnection(url: String, key: String) {
+        lifecycleScope.launch {
+            try {
+                val client = com.openbrain.client.OpenBrainClient(url)
+                val result = client.testConnection(key)
+                if (result.isSuccess) {
+                    android.widget.Toast.makeText(this@MainActivity, "Connection Successful!", android.widget.Toast.LENGTH_LONG).show()
+                } else {
+                    val error = result.exceptionOrNull()?.message ?: "Unknown error"
+                    android.widget.Toast.makeText(this@MainActivity, "Connection Failed: $error", android.widget.Toast.LENGTH_LONG).show()
+                }
+            } catch (e: Exception) {
+                Logger.e("Manual connection test failed", e)
+                android.widget.Toast.makeText(this@MainActivity, "Error: ${e.message}", android.widget.Toast.LENGTH_LONG).show()
+            }
+        }
     }
 }

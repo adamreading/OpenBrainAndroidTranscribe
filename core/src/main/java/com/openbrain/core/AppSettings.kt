@@ -1,12 +1,24 @@
-package com.openbrain.ambient
+package com.openbrain.core
 
 import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 
+private val Context.dataStoreDelegate: DataStore<Preferences> by preferencesDataStore(name = "app_settings")
+
 object AppSettings {
+    private var instance: DataStore<Preferences>? = null
+
+    fun getInstance(context: Context): DataStore<Preferences> {
+        return instance ?: synchronized(this) {
+            instance ?: context.applicationContext.dataStoreDelegate.also { instance = it }
+        }
+    }
+
     val SUPABASE_URL = stringPreferencesKey("supabase_url")
     val SUPABASE_API_KEY = stringPreferencesKey("supabase_api_key")
     val WHISPER_MODEL = stringPreferencesKey("whisper_model") // "tiny" | "base" | "small"
@@ -16,6 +28,4 @@ object AppSettings {
     val WAKE_WORD = stringPreferencesKey("wake_word") // default "hey adam"
     val SLEEP_WORD = stringPreferencesKey("sleep_word") // default "go to sleep"
     val IS_ACTIVE = booleanPreferencesKey("is_active") // persisted state
-
-    val Context.settingsDataStore by preferencesDataStore("app_settings")
 }

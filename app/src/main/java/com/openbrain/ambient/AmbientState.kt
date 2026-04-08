@@ -3,7 +3,7 @@ package com.openbrain.ambient
 import android.content.Context
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
-import com.openbrain.ambient.AppSettings.settingsDataStore
+import com.openbrain.core.AppSettings
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.*
@@ -35,15 +35,14 @@ object AmbientState {
     private val SYNC_LOG_KEY = stringPreferencesKey("sync_log")
 
     fun init(context: Context) {
+        val appContext = context.applicationContext
         scope.launch {
-            // Restore isActive from DataStore
-            val storedActive = context.settingsDataStore.data
-                .map { it[AppSettings.IS_ACTIVE] ?: false }
-                .first()
-            _isActive.value = storedActive
+            // Force inactive on start to prevent crash loops.
+            // This ensures the app doesn't immediately try to load heavy models if it crashed while active.
+            _isActive.value = false
 
             // Restore sync log from DataStore
-            val storedLog = context.settingsDataStore.data
+            val storedLog = AppSettings.getInstance(appContext).data
                 .map { it[SYNC_LOG_KEY] }
                 .first()
             if (storedLog != null) {
@@ -57,9 +56,19 @@ object AmbientState {
         }
     }
 
+    private const val MAX_TRANSCRIPT_LENGTH = 10000
+
     fun appendTranscript(text: String) {
         if (text.isNotBlank()) {
-            _transcript.value += "\n" + text.trim()
+            val current = _transcript.value
+            val newContent = if (current.isEmpty()) text.trim() else current + "\n" + text.trim()
+            
+            // Sliding window: keep only the last MAX_TRANSCRIPT_LENGTH characters
+            _transcript.value = if (newContent.length > MAX_TRANSCRIPT_LENGTH) {
+                newContent.substring(newContent.length - MAX_TRANSCRIPT_LENGTH)
+            } else {
+                newContent
+            }
         }
     }
 
@@ -77,7 +86,7 @@ object AmbientState {
 
     suspend fun setActive(context: Context, active: Boolean) {
         _isActive.value = active
-        context.settingsDataStore.edit { prefs ->
+        AppSettings.getInstance(context).edit { prefs ->
             prefs[AppSettings.IS_ACTIVE] = active
         }
     }
@@ -86,7 +95,7 @@ object AmbientState {
         val updated = (_syncLog.value + entry).takeLast(50)
         _syncLog.value = updated
         scope.launch {
-            context.settingsDataStore.edit { prefs ->
+            AppSettings.getInstance(context).edit { prefs ->
                 prefs[SYNC_LOG_KEY] = gson.toJson(updated)
             }
         }

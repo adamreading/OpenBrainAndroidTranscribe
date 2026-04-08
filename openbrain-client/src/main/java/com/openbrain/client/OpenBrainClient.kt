@@ -28,7 +28,7 @@ class OpenBrainClient(baseUrl: String) {
         .create(OpenBrainApi::class.java)
 
     suspend fun postMemory(apiKey: String, memory: MemoryRequest): Result<Unit> {
-        val auth = "Bearer $apiKey"
+        val auth = if (apiKey.isBlank()) "" else "Bearer $apiKey"
         var lastException: Exception? = null
 
         for (attempt in 1..3) {

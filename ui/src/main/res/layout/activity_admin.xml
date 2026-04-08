@@ -21,6 +21,16 @@
                 android:text="OpenBrain Settings"
                 android:textSize="24sp"
                 android:textStyle="bold"
+                android:layout_marginBottom="8dp" />
+
+            <!-- Save Button at top for visibility -->
+            <Button
+                android:id="@+id/saveBtn"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Save Settings"
+                android:backgroundTint="@color/design_default_color_primary"
+                android:textColor="@android:color/white"
                 android:layout_marginBottom="24dp" />
 
             <!-- OpenBrain Connection -->
@@ -221,14 +231,6 @@
                 android:layout_height="1dp"
                 android:background="#CCCCCC"
                 android:layout_marginVertical="16dp" />
-
-            <!-- Save Button -->
-            <Button
-                android:id="@+id/saveBtn"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Save Settings"
-                android:layout_marginBottom="16dp" />
 
             <!-- Sync Log -->
             <TextView
